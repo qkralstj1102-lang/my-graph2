@@ -8,20 +8,28 @@ st.set_page_config(
 )
 
 st.title("영화 데이터 그래프 도감 2 - 분포와 관계")
-st.write("1년간 박스오피스 10위권에 든 영화 중 해당 기간에 개봉한 216편의 데이터를 분석합니다.")
+st.write(
+    "1년간 박스오피스 10위권에 든 영화 중 "
+    "해당 기간에 개봉한 216편의 데이터를 분석합니다."
+)
 
 DATA_URL = "https://raw.githubusercontent.com/greatsong/modudata/main/data/kobis_movies.csv"
 
+
+# ==================================================
 # 데이터 불러오기
+# ==================================================
+
 try:
     df = pd.read_csv(DATA_URL)
 except Exception:
     st.error("데이터를 불러오는 데 문제가 발생했습니다.")
     st.stop()
 
-# -------------------------
+
+# ==================================================
 # 데이터 전처리
-# -------------------------
+# ==================================================
 
 df["openDt"] = pd.to_datetime(
     df["openDt"].astype(str),
@@ -39,7 +47,7 @@ df["genre_main"] = (
     .str.strip()
 )
 
-# 숫자형 데이터 변환
+# 숫자 데이터 변환
 for col in ["total_audi", "first_scrn", "first_week_audi"]:
     df[col] = pd.to_numeric(
         df[col],
@@ -78,7 +86,10 @@ fig1.update_traces(
     )
 )
 
-st.plotly_chart(fig1, use_container_width=True)
+st.plotly_chart(
+    fig1,
+    use_container_width=True
+)
 
 st.text_input(
     "이 그래프로 알 수 있는 것",
@@ -110,7 +121,10 @@ fig2.update_traces(
     )
 )
 
-st.plotly_chart(fig2, use_container_width=True)
+st.plotly_chart(
+    fig2,
+    use_container_width=True
+)
 
 st.text_input(
     "이 그래프로 알 수 있는 것",
@@ -147,14 +161,16 @@ fig3.update_traces(
     )
 )
 
-st.plotly_chart(fig3, use_container_width=True)
+st.plotly_chart(
+    fig3,
+    use_container_width=True
+)
 
-# 가장 많이 몰린 관객 구간 계산
+# 가장 많이 몰린 관객 구간
 try:
-    bins = 20
     categories = pd.cut(
         df["total_audi"],
-        bins=bins
+        bins=20
     )
 
     interval_counts = categories.value_counts().sort_index()
@@ -169,6 +185,7 @@ try:
             f"대부분의 영화는 약 {lower:,}명 ~ {upper:,}명의 "
             f"총 관객 구간에 가장 많이 몰려 있습니다."
         )
+
 except Exception:
     pass
 
@@ -208,7 +225,10 @@ fig4 = px.scatter(
         "total_audi": "총 관객 수",
         "genre_main": "장르"
     },
-    custom_data=["first_scrn", "total_audi"]
+    custom_data=[
+        "first_scrn",
+        "total_audi"
+    ]
 )
 
 fig4.update_traces(
@@ -220,7 +240,10 @@ fig4.update_traces(
     )
 )
 
-st.plotly_chart(fig4, use_container_width=True)
+st.plotly_chart(
+    fig4,
+    use_container_width=True
+)
 
 st.text_input(
     "이 그래프로 알 수 있는 것",
@@ -270,7 +293,10 @@ if len(box_df) > 0:
         )
     )
 
-    st.plotly_chart(fig5, use_container_width=True)
+    st.plotly_chart(
+        fig5,
+        use_container_width=True
+    )
 
 else:
     st.info("영화가 10편 이상인 장르가 없습니다.")
@@ -322,7 +348,10 @@ fig6.update_traces(
     )
 )
 
-st.plotly_chart(fig6, use_container_width=True)
+st.plotly_chart(
+    fig6,
+    use_container_width=True
+)
 
 st.text_input(
     "이 그래프로 알 수 있는 것",
@@ -355,7 +384,6 @@ sunburst_df["genre_main"] = (
     .str.strip()
 )
 
-# 국가와 장르별 영화 편수 계산
 sunburst_data = (
     sunburst_df
     .groupby(["nation", "genre_main"])
@@ -397,8 +425,80 @@ st.divider()
 
 
 # ==================================================
-# 8. 다음 그래프
+# 8. 장르별 평균 첫 주 관객 수
 # ==================================================
 
-st.header("8. 다음 그래프")
-st.info("여덟 번째 그래프를 이 아래에 추가할 수 있습니다.")
+st.header("8. 장르별 평균 첫 주 관객 수")
+
+genre_first_week = (
+    df.groupby("genre_main")["first_week_audi"]
+    .mean()
+    .reset_index()
+)
+
+genre_first_week.columns = [
+    "genre_main",
+    "평균 첫 주 관객"
+]
+
+genre_first_week = genre_first_week.sort_values(
+    "평균 첫 주 관객",
+    ascending=False
+)
+
+fig8 = px.bar(
+    genre_first_week,
+    x="genre_main",
+    y="평균 첫 주 관객",
+    title="장르별 평균 첫 주 관객 수",
+    labels={
+        "genre_main": "장르",
+        "평균 첫 주 관객": "평균 첫 주 관객 수"
+    }
+)
+
+fig8.update_traces(
+    hovertemplate=(
+        "<b>%{x}</b><br>"
+        "평균 첫 주 관객: %{y:,.0f}명"
+        "<extra></extra>"
+    )
+)
+
+fig8.update_layout(
+    xaxis_title="장르",
+    yaxis_title="평균 첫 주 관객 수",
+    height=600
+)
+
+st.plotly_chart(
+    fig8,
+    use_container_width=True
+)
+
+# 가장 높은 평균을 기록한 장르
+if len(genre_first_week) > 0:
+    top_genre = genre_first_week.iloc[0]
+
+    st.write(
+        f"평균 첫 주 관객 수가 가장 높은 장르는 "
+        f"「{top_genre['genre_main']}」이며, "
+        f"평균 약 {top_genre['평균 첫 주 관객']:,.0f}명의 "
+        f"첫 주 관객을 기록했습니다."
+    )
+
+st.text_input(
+    "이 그래프로 알 수 있는 것",
+    placeholder="장르별 평균 첫 주 관객 수의 차이를 적어 보세요.",
+    key="graph8_note"
+)
+
+st.divider()
+
+
+# ==================================================
+# 다음 그래프
+# ==================================================
+
+st.header("9. 다음 그래프")
+st.info("아홉 번째 그래프를 이 아래에 추가할 수 있습니다.")
